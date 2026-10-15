@@ -7,9 +7,10 @@ import { getRatingIntervalPreviews } from '../utils/sm2';
 import { CountryMap } from './CountryMap';
 import { getFlagUrl } from '../utils/flags';
 
-import { RegionFilter } from '../types';
+import { RegionFilter, AppExperienceMode } from '../types';
 import { getCountriesForRegionFilter } from '../data/subregions';
 import { RegionFilterBadge } from './RegionSelectorModal';
+import { RotateCcw, Check } from 'lucide-react';
 
 interface FlashcardModeProps {
   progress: UserProgress;
@@ -17,6 +18,7 @@ interface FlashcardModeProps {
   initialContinent?: Continent;
   regionFilter: RegionFilter;
   onOpenRegionSelector: () => void;
+  experienceMode?: AppExperienceMode;
 }
 
 export const FlashcardMode: React.FC<FlashcardModeProps> = ({
@@ -25,6 +27,7 @@ export const FlashcardMode: React.FC<FlashcardModeProps> = ({
   initialContinent,
   regionFilter,
   onOpenRegionSelector,
+  experienceMode = 'simple',
 }) => {
   const [deck, setDeck] = useState<Country[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -312,91 +315,115 @@ export const FlashcardMode: React.FC<FlashcardModeProps> = ({
             </div>
           </div>
 
-          {/* 4 SM-2 / Leitner Buttons: Fácil, Bien, Difícil, No lo sabía */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {/* 1: No lo sabía */}
-              <button
-                type="button"
-                onClick={() => handleRating('no_lo_sabia')}
-                className="group flex flex-col items-center justify-center p-3 border border-stone-200 dark:border-stone-800 hover:border-red-400/80 dark:hover:border-red-400/60 bg-white dark:bg-stone-900 hover:bg-red-50/30 dark:hover:bg-red-950/20 text-stone-800 dark:text-stone-200 transition-all text-center"
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-xs uppercase tracking-wider font-medium text-stone-800 dark:text-stone-200">
-                    No lo sabía
-                  </span>
-                  <span className="font-mono text-[10px] text-stone-400 group-hover:text-red-500">
-                    (1)
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500">
-                  Próx: {intervalPreviews.no_lo_sabia}
-                </span>
-              </button>
+          {/* Rating buttons: 2 big buttons in simple mode, 4 in advanced mode */}
+          {experienceMode === 'simple' ? (
+            <div className="space-y-3 pt-1">
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleRating('no_lo_sabia')}
+                  className="flex items-center justify-center gap-2.5 p-4 rounded-2xl border-2 border-amber-300 dark:border-amber-700/80 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200 font-semibold text-lg shadow-sm transition-all active:scale-98 cursor-pointer"
+                >
+                  <RotateCcw className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <span>Repasar</span>
+                </button>
 
-              {/* 2: Difícil */}
-              <button
-                type="button"
-                onClick={() => handleRating('dificil')}
-                className="group flex flex-col items-center justify-center p-3 border border-stone-200 dark:border-stone-800 hover:border-amber-400/80 dark:hover:border-amber-400/60 bg-white dark:bg-stone-900 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 text-stone-800 dark:text-stone-200 transition-all text-center"
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-xs uppercase tracking-wider font-medium text-stone-800 dark:text-stone-200">
-                    Difícil
-                  </span>
-                  <span className="font-mono text-[10px] text-stone-400 group-hover:text-amber-500">
-                    (2)
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500">
-                  Próx: {intervalPreviews.dificil}
-                </span>
-              </button>
-
-              {/* 3: Bien */}
-              <button
-                type="button"
-                onClick={() => handleRating('bien')}
-                className="group flex flex-col items-center justify-center p-3 border border-stone-300 dark:border-stone-700 hover:border-stone-600 dark:hover:border-stone-400 bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-900 dark:text-stone-100 transition-all text-center"
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-xs uppercase tracking-wider font-medium text-stone-900 dark:text-stone-100">
-                    Bien
-                  </span>
-                  <span className="font-mono text-[10px] text-stone-500">
-                    (3)
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-stone-500 dark:text-stone-400">
-                  Próx: {intervalPreviews.bien}
-                </span>
-              </button>
-
-              {/* 4: Fácil */}
-              <button
-                type="button"
-                onClick={() => handleRating('facil')}
-                className="group flex flex-col items-center justify-center p-3 border border-stone-900 dark:border-stone-100 hover:bg-stone-800 dark:hover:bg-white bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 transition-all text-center"
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-xs uppercase tracking-wider font-medium text-white dark:text-stone-900">
-                    Fácil
-                  </span>
-                  <span className="font-mono text-[10px] text-stone-300 dark:text-stone-600">
-                    (4)
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-stone-300 dark:text-stone-600">
-                  Próx: {intervalPreviews.facil}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => handleRating('bien')}
+                  className="flex items-center justify-center gap-2.5 p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-lg shadow-md transition-all active:scale-98 cursor-pointer"
+                >
+                  <Check className="w-6 h-6" />
+                  <span>Lo sé</span>
+                </button>
+              </div>
             </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {/* 1: No lo sabía */}
+                <button
+                  type="button"
+                  onClick={() => handleRating('no_lo_sabia')}
+                  className="group flex flex-col items-center justify-center p-3 border border-stone-200 dark:border-stone-800 hover:border-red-400/80 dark:hover:border-red-400/60 bg-white dark:bg-stone-900 hover:bg-red-50/30 dark:hover:bg-red-950/20 text-stone-800 dark:text-stone-200 transition-all text-center"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-xs uppercase tracking-wider font-medium text-stone-800 dark:text-stone-200">
+                      No lo sabía
+                    </span>
+                    <span className="font-mono text-[10px] text-stone-400 group-hover:text-red-500">
+                      (1)
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500">
+                    Próx: {intervalPreviews.no_lo_sabia}
+                  </span>
+                </button>
 
-            <div className="flex items-center justify-between text-[11px] font-mono text-stone-400 pt-2 px-1">
-              <span>SM-2 Interval Scheduling</span>
-              <span>Espacio = Voltear</span>
+                {/* 2: Difícil */}
+                <button
+                  type="button"
+                  onClick={() => handleRating('dificil')}
+                  className="group flex flex-col items-center justify-center p-3 border border-stone-200 dark:border-stone-800 hover:border-amber-400/80 dark:hover:border-amber-400/60 bg-white dark:bg-stone-900 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 text-stone-800 dark:text-stone-200 transition-all text-center"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-xs uppercase tracking-wider font-medium text-stone-800 dark:text-stone-200">
+                      Difícil
+                    </span>
+                    <span className="font-mono text-[10px] text-stone-400 group-hover:text-amber-500">
+                      (2)
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500">
+                    Próx: {intervalPreviews.dificil}
+                  </span>
+                </button>
+
+                {/* 3: Bien */}
+                <button
+                  type="button"
+                  onClick={() => handleRating('bien')}
+                  className="group flex flex-col items-center justify-center p-3 border border-stone-300 dark:border-stone-700 hover:border-stone-600 dark:hover:border-stone-400 bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-900 dark:text-stone-100 transition-all text-center"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-xs uppercase tracking-wider font-medium text-stone-900 dark:text-stone-100">
+                      Bien
+                    </span>
+                    <span className="font-mono text-[10px] text-stone-500">
+                      (3)
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-stone-500 dark:text-stone-400">
+                    Próx: {intervalPreviews.bien}
+                  </span>
+                </button>
+
+                {/* 4: Fácil */}
+                <button
+                  type="button"
+                  onClick={() => handleRating('facil')}
+                  className="group flex flex-col items-center justify-center p-3 border border-stone-900 dark:border-stone-100 hover:bg-stone-800 dark:hover:bg-white bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 transition-all text-center"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-xs uppercase tracking-wider font-medium text-white dark:text-stone-900">
+                      Fácil
+                    </span>
+                    <span className="font-mono text-[10px] text-stone-300 dark:text-stone-600">
+                      (4)
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-stone-300 dark:text-stone-600">
+                    Próx: {intervalPreviews.facil}
+                  </span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] font-mono text-stone-400 pt-2 px-1">
+                <span>SM-2 Interval Scheduling</span>
+                <span>Espacio = Voltear</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

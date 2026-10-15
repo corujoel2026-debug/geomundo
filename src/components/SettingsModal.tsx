@@ -14,8 +14,11 @@ import {
   Moon,
   FileText,
   Smartphone,
+  HelpCircle,
+  Sliders,
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { AppExperienceMode } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -24,6 +27,9 @@ interface SettingsModalProps {
   onUpdateProgress: (updated: UserProgress) => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  experienceMode: AppExperienceMode;
+  onToggleExperienceMode: (mode: AppExperienceMode) => void;
+  onOpenOnboarding: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -33,6 +39,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateProgress,
   theme,
   onToggleTheme,
+  experienceMode,
+  onToggleExperienceMode,
+  onOpenOnboarding,
 }) => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -137,7 +146,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 Ajustes
               </h2>
               <span className="text-[11px] font-mono text-stone-400 block">
-                Copia de seguridad y configuración
+                {experienceMode === 'simple' ? 'Preferencias de la aplicación' : 'Copia de seguridad y configuración avanzada'}
               </span>
             </div>
           </div>
@@ -149,6 +158,73 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             title="Cerrar ajustes"
           >
             <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* SECTION 1: MODO DE USO (Simple vs Avanzado) */}
+        <div className="p-4 rounded-xl border-2 border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-900/60 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-400 block">
+                Modo de la aplicación
+              </span>
+              <h3 className="text-base font-serif font-medium text-stone-900 dark:text-stone-100 mt-0.5">
+                {experienceMode === 'simple' ? 'Modo simple (Recomendado)' : 'Modo avanzado'}
+              </h3>
+            </div>
+
+            {/* Switch / Segmented control */}
+            <div className="inline-flex items-center p-1 bg-stone-200/80 dark:bg-stone-800 rounded-xl shrink-0">
+              <button
+                type="button"
+                onClick={() => onToggleExperienceMode('simple')}
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  experienceMode === 'simple'
+                    ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-xs font-semibold'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+              >
+                Modo simple
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleExperienceMode('advanced')}
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  experienceMode === 'advanced'
+                    ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-xs font-semibold'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+              >
+                Modo avanzado
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+            {experienceMode === 'simple'
+              ? 'Ideal para cualquier edad: sesiones de 10 países con tarjetas y preguntas sencillas, letra grande y botones claros («Lo sé» y «Repasar»).'
+              : 'Incluye todas las herramientas: contrarreloj, mapa mudo, filtros por subregión de la ONU, algoritmo SM-2 y exportar/importar progreso.'}
+          </p>
+        </div>
+
+        {/* SECTION 2: GUÍA DE BIENVENIDA */}
+        <div className="flex items-center justify-between p-3.5 rounded-xl border border-stone-200/80 dark:border-stone-800 bg-white dark:bg-stone-900">
+          <div>
+            <span className="text-xs font-medium text-stone-800 dark:text-stone-200 block">
+              Guía de bienvenida
+            </span>
+            <span className="text-[11px] text-stone-400 block mt-0.5">
+              Repasa la explicación de 3 pasos de cómo jugar
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onOpenOnboarding}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-medium transition-colors cursor-pointer"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Ver guía</span>
           </button>
         </div>
 
@@ -245,45 +321,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         )}
 
-        {/* SECTION: DATA EXPORT & IMPORT */}
-        <div className="space-y-3">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block">
-            Copia de seguridad y datos
-          </span>
-          <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-            Descarga una copia completa de tu avance (países dominados, programación de repasos espaciados, racha de días, puntajes y estadísticas) o restaura un archivo previo.
-          </p>
+        {/* SECTION: DATA EXPORT & IMPORT (Only in Advanced Mode) */}
+        {experienceMode === 'advanced' && (
+          <div className="space-y-3 pt-4 border-t border-stone-100 dark:border-stone-800">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block font-semibold">
+              Copia de seguridad y datos (Modo avanzado)
+            </span>
+            <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+              Descarga una copia completa de tu avance (países dominados, programación de repasos espaciados, racha de días, puntajes y estadísticas) o restaura un archivo previo.
+            </p>
 
-          {/* Hidden File Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFileSelected}
-            className="hidden"
-          />
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleFileSelected}
+              className="hidden"
+            />
 
-          {/* The two required buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <button
-              type="button"
-              onClick={handleExport}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/60 hover:bg-white dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-mono uppercase tracking-wider font-medium transition-all"
-            >
-              <Download className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>Exportar progreso</span>
-            </button>
+            {/* The two required buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleExport}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/60 hover:bg-white dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-mono uppercase tracking-wider font-medium transition-all cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-stone-500 dark:text-stone-400" />
+                <span>Exportar progreso</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-white dark:text-stone-900 text-xs font-mono uppercase tracking-wider font-medium transition-all shadow-sm"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Importar progreso</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-white dark:text-stone-900 text-xs font-mono uppercase tracking-wider font-medium transition-all shadow-sm cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Importar progreso</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* SECTION: THEME */}
         <div className="pt-4 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between">

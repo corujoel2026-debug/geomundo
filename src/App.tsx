@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Continent, Country, ActiveTab, UserProgress, RegionFilter } from './types';
+import { Continent, Country, ActiveTab, UserProgress, RegionFilter, AppExperienceMode } from './types';
 import { CONTINENTS_LIST } from './data/continents';
 import { COUNTRIES, COUNTRIES_BY_CONTINENT, TOTAL_COUNTRIES_COUNT } from './data/countries';
 import {
@@ -9,6 +9,10 @@ import {
   toggleReviewStatus,
   loadSavedTheme,
   saveTheme,
+  loadSavedExperienceMode,
+  saveExperienceMode,
+  hasCompletedOnboarding,
+  setOnboardingCompleted,
 } from './utils/storage';
 import { getDailyReviewQueue } from './utils/sm2';
 import { loadSavedRegionFilter, saveRegionFilter } from './data/subregions';
@@ -17,6 +21,7 @@ import { ContinentCard } from './components/ContinentCard';
 import { ContinentView } from './components/ContinentView';
 import { CountryDetailModal } from './components/CountryDetailModal';
 import { FlashcardMode } from './components/FlashcardMode';
+import { GuidedPracticeMode } from './components/GuidedPracticeMode';
 import { DailyReviewMode } from './components/DailyReviewMode';
 import { QuizMode } from './components/QuizMode';
 import { TimeTrialMode } from './components/TimeTrialMode';
@@ -26,6 +31,8 @@ import { ProgressDashboard } from './components/ProgressDashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { RegionSelectorModal, RegionFilterBadge } from './components/RegionSelectorModal';
 import { OfflineBanner } from './components/OfflineBanner';
+import { OnboardingModal } from './components/OnboardingModal';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -37,6 +44,8 @@ export default function App() {
   const [regionFilter, setRegionFilter] = useState<RegionFilter>(loadSavedRegionFilter);
   const [progress, setProgress] = useState<UserProgress>(loadUserProgress());
   const [studyContinent, setStudyContinent] = useState<Continent | undefined>(undefined);
+  const [experienceMode, setExperienceMode] = useState<AppExperienceMode>(loadSavedExperienceMode);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => !hasCompletedOnboarding());
 
   useEffect(() => {
     const saved = loadSavedTheme();
@@ -52,6 +61,24 @@ export default function App() {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     saveTheme(next);
+  };
+
+  const handleToggleExperienceMode = (mode: AppExperienceMode) => {
+    setExperienceMode(mode);
+    saveExperienceMode(mode);
+    // If switching to simple mode and user is on an advanced-only tab, return to continents
+    if (
+      mode === 'simple' &&
+      (activeTab === 'contrarreloj' ||
+        activeTab === 'spaced-review' ||
+        activeTab === 'progress' ||
+        activeTab === 'map-game' ||
+        activeTab === 'quiz' ||
+        activeTab === 'daily-review')
+    ) {
+      setActiveTab('continents');
+      setSelectedContinent(null);
+    }
   };
 
   const handleUpdateProgress = (updated: UserProgress) => {
@@ -130,9 +157,24 @@ export default function App() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         onOpenSettings={() => setShowSettingsModal(true)}
+        experienceMode={experienceMode}
+        onOpenOnboarding={() => setShowOnboarding(true)}
       />
 
       <main className="flex-1 pb-24">
+        {/* GUIDED PRACTICE TAB (Modo Simple y accesible) */}
+        {activeTab === 'guided-practice' && (
+          <GuidedPracticeMode
+            progress={progress}
+            onUpdateProgress={handleUpdateProgress}
+            onExit={() => {
+              setActiveTab('continents');
+              setSelectedContinent(null);
+            }}
+            selectedContinent={studyContinent}
+          />
+        )}
+
         {/* CONTINENTS TAB */}
         {activeTab === 'continents' && (
           <>
@@ -147,90 +189,135 @@ export default function App() {
                 onStartMapGame={handleStartMapGame}
                 onToggleMastered={handleToggleMastered}
                 onToggleReview={handleToggleReview}
+                experienceMode={experienceMode}
+                onStartGuidedPractice={(c) => {
+                  setStudyContinent(c);
+                  setActiveTab('guided-practice');
+                }}
               />
             ) : (
-              <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20 space-y-16">
-                {/* Hero section */}
-                <div className="space-y-6 max-w-3xl">
-                  <span className="text-xs uppercase tracking-widest font-mono text-stone-400 block">
-                    Atlas geográfico & estudio
-                  </span>
-
-                  <h1 className="text-4xl sm:text-6xl font-serif font-normal text-stone-900 dark:text-stone-100 leading-[1.15]">
-                    Memoriza los Estados del mundo por continentes.
-                  </h1>
-
-                  <p className="text-base text-stone-600 dark:text-stone-400 leading-relaxed font-normal">
-                    Repertorio completo de los {TOTAL_COUNTRIES_COUNT} países del mundo. Banderas oficiales, capitales administrativas y emplazamiento cartográfico.
-                  </p>
-
-                  <div className="pt-2 flex items-center gap-8 text-xs font-mono text-stone-500">
-                    <div>
-                      <span className="text-stone-900 dark:text-stone-100 font-medium">
-                        {totalMastered}
-                      </span>
-                      <span> / {TOTAL_COUNTRIES_COUNT} países</span>
+              <div className="max-w-6xl mx-auto px-6 sm:px-8 py-10 sm:py-16 space-y-12">
+                {experienceMode === 'simple' ? (
+                  /* Modo Simple: Pantalla de inicio con botón grande "Empezar a practicar" */
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 p-6 sm:p-10 rounded-3xl bg-stone-50 dark:bg-stone-900/60 border-2 border-stone-200/80 dark:border-stone-800 shadow-sm">
+                    <div className="space-y-3 max-w-xl">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Aprende a tu propio ritmo
+                      </div>
+                      <h1 className="text-3xl sm:text-5xl font-serif font-medium text-stone-900 dark:text-stone-100 leading-tight">
+                        Aprende los países y banderas del mundo
+                      </h1>
+                      <p className="text-base sm:text-lg text-stone-600 dark:text-stone-300 leading-relaxed">
+                        Toca un continente o empieza tu práctica guiada de 10 países con tarjetas y preguntas fáciles.
+                      </p>
                     </div>
-                    <span className="text-stone-300 dark:text-stone-700">·</span>
-                    <div>
-                      <span>Dominio global: </span>
-                      <span className="text-stone-900 dark:text-stone-100 font-medium">
-                        {globalPercent}%
-                      </span>
+
+                    <div className="shrink-0 flex flex-col gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStudyContinent(undefined);
+                          setActiveTab('guided-practice');
+                        }}
+                        className="flex items-center justify-center gap-3 px-8 py-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xl shadow-lg transition-all active:scale-98 cursor-pointer"
+                      >
+                        <Sparkles className="w-6 h-6" />
+                        <span>Empezar a practicar</span>
+                      </button>
+
+                      <div className="flex items-center justify-center gap-3 text-xs text-stone-500 font-mono">
+                        <span>🏆 {totalMastered} dominados</span>
+                        <span>·</span>
+                        <span>🔥 Racha: {progress.currentStreak} {progress.currentStreak === 1 ? 'día' : 'días'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  /* Modo Avanzado: Hero editorial con métricas completas y banner SM-2 */
+                  <>
+                    <div className="space-y-6 max-w-3xl">
+                      <span className="text-xs uppercase tracking-widest font-mono text-stone-400 block">
+                        Atlas geográfico & estudio
+                      </span>
 
-                {/* Minimalist Daily Review Banner */}
-                <div className="border border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/30 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                        Repetición Espaciada SM-2
-                      </span>
-                      <span className="text-stone-300 dark:text-stone-700">·</span>
-                      <span className="text-xs font-mono text-stone-600 dark:text-stone-300">
-                        {pendingDueCount > 0 ? `${pendingDueCount} por repasar hoy` : 'Al día'}
-                      </span>
+                      <h1 className="text-4xl sm:text-6xl font-serif font-normal text-stone-900 dark:text-stone-100 leading-[1.15]">
+                        Memoriza los Estados del mundo por continentes.
+                      </h1>
+
+                      <p className="text-base text-stone-600 dark:text-stone-400 leading-relaxed font-normal">
+                        Repertorio completo de los {TOTAL_COUNTRIES_COUNT} países del mundo. Banderas oficiales, capitales administrativas y emplazamiento cartográfico.
+                      </p>
+
+                      <div className="pt-2 flex items-center gap-8 text-xs font-mono text-stone-500">
+                        <div>
+                          <span className="text-stone-900 dark:text-stone-100 font-medium">
+                            {totalMastered}
+                          </span>
+                          <span> / {TOTAL_COUNTRIES_COUNT} países</span>
+                        </div>
+                        <span className="text-stone-300 dark:text-stone-700">·</span>
+                        <div>
+                          <span>Dominio global: </span>
+                          <span className="text-stone-900 dark:text-stone-100 font-medium">
+                            {globalPercent}%
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <h2 className="text-xl font-serif text-stone-900 dark:text-stone-100">
-                      Repaso del día
-                    </h2>
-                    <p className="text-xs text-stone-500 dark:text-stone-400 max-w-xl">
-                      Sesión programada de {dueCountries.length} países para afianzar la memoria a largo plazo según la curva de olvido.
-                    </p>
-                  </div>
 
-                  <div className="shrink-0 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowRegionModal(true)}
-                      className="w-full sm:w-auto px-4 py-2.5 text-xs font-mono border border-stone-300 dark:border-stone-700 hover:border-stone-900 dark:hover:border-stone-100 text-stone-700 dark:text-stone-300 transition-colors"
-                    >
-                      Elegir región
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStartMapGame()}
-                      className="w-full sm:w-auto px-5 py-2.5 text-xs uppercase tracking-widest font-medium border border-stone-300 dark:border-stone-700 hover:border-stone-900 dark:hover:border-stone-100 text-stone-900 dark:text-stone-100 transition-colors"
-                    >
-                      Mapa mudo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('daily-review')}
-                      className="w-full sm:w-auto px-6 py-2.5 text-xs uppercase tracking-widest font-medium bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-white dark:text-stone-900 transition-colors"
-                    >
-                      Comenzar sesión
-                    </button>
-                  </div>
-                </div>
+                    {/* Minimalist Daily Review Banner */}
+                    <div className="border border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/30 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-mono uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                            Repetición Espaciada SM-2
+                          </span>
+                          <span className="text-stone-300 dark:text-stone-700">·</span>
+                          <span className="text-xs font-mono text-stone-600 dark:text-stone-300">
+                            {pendingDueCount > 0 ? `${pendingDueCount} por repasar hoy` : 'Al día'}
+                          </span>
+                        </div>
+                        <h2 className="text-xl font-serif text-stone-900 dark:text-stone-100">
+                          Repaso del día
+                        </h2>
+                        <p className="text-xs text-stone-500 dark:text-stone-400 max-w-xl">
+                          Sesión programada de {dueCountries.length} países para afianzar la memoria a largo plazo según la curva de olvido.
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowRegionModal(true)}
+                          className="w-full sm:w-auto px-4 py-2.5 text-xs font-mono border border-stone-300 dark:border-stone-700 hover:border-stone-900 dark:hover:border-stone-100 text-stone-700 dark:text-stone-300 transition-colors"
+                        >
+                          Elegir región
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStartMapGame()}
+                          className="w-full sm:w-auto px-5 py-2.5 text-xs uppercase tracking-widest font-medium border border-stone-300 dark:border-stone-700 hover:border-stone-900 dark:hover:border-stone-100 text-stone-900 dark:text-stone-100 transition-colors"
+                        >
+                          Mapa mudo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('daily-review')}
+                          className="w-full sm:w-auto px-6 py-2.5 text-xs uppercase tracking-widest font-medium bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-white dark:text-stone-900 transition-colors"
+                        >
+                          Comenzar sesión
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* 6 Continent Cards Grid */}
-                <div className="space-y-6 pt-6 border-t border-stone-100 dark:border-stone-800">
+                <div className="space-y-6 pt-4 border-t border-stone-100 dark:border-stone-800">
                   <div className="flex items-baseline justify-between text-xs text-stone-400 font-mono">
                     <span className="uppercase tracking-wider">
-                      Continentes
+                      Continentes del mundo
                     </span>
                     <span>
                       6 divisiones territoriales
@@ -244,7 +331,14 @@ export default function App() {
                         continent={cont}
                         progress={progress}
                         onSelectContinent={(c) => setSelectedContinent(c)}
-                        onStartFlashcards={(c) => handleStartFlashcards(c)}
+                        onStartFlashcards={(c) => {
+                          if (experienceMode === 'simple') {
+                            setStudyContinent(c);
+                            setActiveTab('guided-practice');
+                          } else {
+                            handleStartFlashcards(c);
+                          }
+                        }}
                       />
                     ))}
                   </div>
@@ -277,6 +371,7 @@ export default function App() {
             initialContinent={studyContinent}
             regionFilter={regionFilter}
             onOpenRegionSelector={() => setShowRegionModal(true)}
+            experienceMode={experienceMode}
           />
         )}
 
@@ -360,6 +455,25 @@ export default function App() {
         onUpdateProgress={handleUpdateProgress}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        experienceMode={experienceMode}
+        onToggleExperienceMode={handleToggleExperienceMode}
+        onOpenOnboarding={() => {
+          setShowSettingsModal(false);
+          setShowOnboarding(true);
+        }}
+      />
+
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => {
+          setShowOnboarding(false);
+          setOnboardingCompleted(true);
+        }}
+        onStartPractice={() => {
+          setShowOnboarding(false);
+          setOnboardingCompleted(true);
+          setActiveTab('guided-practice');
+        }}
       />
 
       <RegionSelectorModal

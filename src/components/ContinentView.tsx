@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Continent, Country, UserProgress, Subregion } from '../types';
+import { Continent, Country, UserProgress, Subregion, AppExperienceMode } from '../types';
 import { CONTINENTS_META } from '../data/continents';
 import { COUNTRIES_BY_CONTINENT } from '../data/countries';
 import { SUBREGIONS_BY_CONTINENT } from '../data/subregions';
 import { CountryCard } from './CountryCard';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, Sparkles } from 'lucide-react';
 
 interface ContinentViewProps {
   continent: Continent;
@@ -16,6 +16,8 @@ interface ContinentViewProps {
   onStartMapGame?: (continent: Continent) => void;
   onToggleMastered: (countryId: string) => void;
   onToggleReview: (countryId: string) => void;
+  experienceMode?: AppExperienceMode;
+  onStartGuidedPractice?: (continent: Continent) => void;
 }
 
 export const ContinentView: React.FC<ContinentViewProps> = ({
@@ -28,6 +30,8 @@ export const ContinentView: React.FC<ContinentViewProps> = ({
   onStartMapGame,
   onToggleMastered,
   onToggleReview,
+  experienceMode = 'simple',
+  onStartGuidedPractice,
 }) => {
   const meta = CONTINENTS_META[continent];
   const countries = COUNTRIES_BY_CONTINENT[continent] || [];
@@ -81,35 +85,52 @@ export const ContinentView: React.FC<ContinentViewProps> = ({
         </button>
 
         {countries.length > 0 && (
-          <div className="flex items-center gap-6 text-xs font-mono uppercase tracking-wider">
+          experienceMode === 'simple' ? (
             <button
               type="button"
-              onClick={() => onStartFlashcards(continent)}
-              className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4"
+              onClick={() => {
+                if (onStartGuidedPractice) {
+                  onStartGuidedPractice(continent);
+                } else {
+                  onStartFlashcards(continent);
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium text-sm shadow-sm transition-all cursor-pointer"
             >
-              Tarjetas
+              <Sparkles className="w-4 h-4" />
+              <span>Practicar {meta.name}</span>
             </button>
-            <span className="text-stone-300 dark:text-stone-700">·</span>
-            <button
-              type="button"
-              onClick={() => onStartQuiz(continent)}
-              className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4"
-            >
-              Cuestionario
-            </button>
-            {onStartMapGame && (
-              <>
-                <span className="text-stone-300 dark:text-stone-700">·</span>
-                <button
-                  type="button"
-                  onClick={() => onStartMapGame(continent)}
-                  className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4"
-                >
-                  Mapa mudo
-                </button>
-              </>
-            )}
-          </div>
+          ) : (
+            <div className="flex items-center gap-6 text-xs font-mono uppercase tracking-wider">
+              <button
+                type="button"
+                onClick={() => onStartFlashcards(continent)}
+                className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4"
+              >
+                Tarjetas
+              </button>
+              <span className="text-stone-300 dark:text-stone-700">·</span>
+              <button
+                type="button"
+                onClick={() => onStartQuiz(continent)}
+                className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4"
+              >
+                Cuestionario
+              </button>
+              {onStartMapGame && (
+                <>
+                  <span className="text-stone-300 dark:text-stone-700">·</span>
+                  <button
+                    type="button"
+                    onClick={() => onStartMapGame(continent)}
+                    className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4"
+                  >
+                    Mapa mudo
+                  </button>
+                </>
+              )}
+            </div>
+          )
         )}
       </div>
 
@@ -236,8 +257,8 @@ export const ContinentView: React.FC<ContinentViewProps> = ({
             </div>
           </div>
 
-          {/* Subregions chips */}
-          {subregions.length > 0 && (
+          {/* Subregions chips (Only in Advanced Mode) */}
+          {experienceMode === 'advanced' && subregions.length > 0 && (
             <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono">
               <span className="text-[10px] uppercase text-stone-400 shrink-0">Subregión:</span>
               <button

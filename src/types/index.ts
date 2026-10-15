@@ -104,4 +104,15 @@ export interface QuizQuestion {
   correctAnswerText: string;
 }
 
-export type ActiveTab = 'continents' | 'flashcards' | 'quiz' | 'map-game' | 'contrarreloj' | 'spaced-review' | 'daily-review' | 'progress';
+export type AppExperienceMode = 'simple' | 'advanced';
+
+export type ActiveTab =
+  | 'continents'
+  | 'guided-practice'
+  | 'flashcards'
+  | 'quiz'
+  | 'map-game'
+  | 'contrarreloj'
+  | 'spaced-review'
+  | 'daily-review'
+  | 'progress';

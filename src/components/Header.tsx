@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { ActiveTab, UserProgress } from '../types';
+import { ActiveTab, UserProgress, AppExperienceMode } from '../types';
 import { TOTAL_COUNTRIES_COUNT } from '../data/countries';
 import { getDailyReviewQueue } from '../utils/sm2';
-import { Sun, Moon, Settings } from 'lucide-react';
+import { Sun, Moon, Settings, HelpCircle, Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -11,6 +11,8 @@ interface HeaderProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onOpenSettings: () => void;
+  experienceMode?: AppExperienceMode;
+  onOpenOnboarding?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,18 +22,28 @@ export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onOpenSettings,
+  experienceMode = 'simple',
+  onOpenOnboarding,
 }) => {
   const { pendingDueCount } = useMemo(() => getDailyReviewQueue(progress, 15), [progress]);
 
-  const navItems: { id: ActiveTab; label: string; badge?: number }[] = [
-    { id: 'continents', label: 'Continentes' },
-    { id: 'daily-review', label: 'Repaso del día', badge: pendingDueCount > 0 ? pendingDueCount : undefined },
-    { id: 'flashcards', label: 'Tarjetas' },
-    { id: 'quiz', label: 'Cuestionario' },
-    { id: 'contrarreloj', label: 'Contrarreloj' },
-    { id: 'map-game', label: 'Mapa mudo' },
-    { id: 'progress', label: 'Progreso' },
-  ];
+  const navItems: { id: ActiveTab; label: string; badge?: number; icon?: boolean }[] = useMemo(() => {
+    if (experienceMode === 'simple') {
+      return [
+        { id: 'continents', label: 'Continentes' },
+        { id: 'guided-practice', label: 'Practicar', icon: true },
+      ];
+    }
+    return [
+      { id: 'continents', label: 'Continentes' },
+      { id: 'daily-review', label: 'Repaso del día', badge: pendingDueCount > 0 ? pendingDueCount : undefined },
+      { id: 'flashcards', label: 'Tarjetas' },
+      { id: 'quiz', label: 'Cuestionario' },
+      { id: 'contrarreloj', label: 'Contrarreloj' },
+      { id: 'map-game', label: 'Mapa mudo' },
+      { id: 'progress', label: 'Progreso' },
+    ];
+  }, [experienceMode, pendingDueCount]);
 
   const masteredCount = progress.masteredIds.length;
   const percentage = Math.round((masteredCount / TOTAL_COUNTRIES_COUNT) * 100);
@@ -114,6 +126,22 @@ export const Header: React.FC<HeaderProps> = ({
             {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
           </button>
 
+          {onOpenOnboarding && (
+            <>
+              <div className="hidden sm:inline text-stone-300 dark:text-stone-700">·</div>
+              <button
+                type="button"
+                onClick={onOpenOnboarding}
+                aria-label="Abrir guía de bienvenida"
+                title="Cómo usar GeoMundo"
+                className="flex items-center gap-1.5 px-2 py-1 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-mono uppercase tracking-wider hidden lg:inline">Guía</span>
+              </button>
+            </>
+          )}
+
           <div className="hidden sm:inline text-stone-300 dark:text-stone-700">·</div>
 
           {/* Ajustes button */}
@@ -121,7 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={onOpenSettings}
             aria-label="Abrir ajustes"
-            title="Ajustes (Exportar / Importar progreso)"
+            title="Ajustes de la aplicación"
             className="flex items-center gap-1.5 px-2 py-1 border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 transition-colors rounded-none"
           >
             <Settings className="w-3.5 h-3.5" />
@@ -154,6 +182,17 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           );
         })}
+
+        {onOpenOnboarding && (
+          <button
+            type="button"
+            onClick={onOpenOnboarding}
+            className="text-[11px] uppercase tracking-wider py-1 px-1.5 whitespace-nowrap transition-colors flex items-center gap-1 text-stone-500 hover:text-stone-900 dark:text-stone-400"
+          >
+            <HelpCircle className="w-3 h-3" />
+            <span>Guía</span>
+          </button>
+        )}
 
         <button
           type="button"

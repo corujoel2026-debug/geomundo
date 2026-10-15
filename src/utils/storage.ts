@@ -1,9 +1,46 @@
-import { UserProgress, CountryStudyData, FlashcardRating } from '../types';
+import { UserProgress, CountryStudyData, FlashcardRating, AppExperienceMode } from '../types';
 import { COUNTRIES } from '../data/countries';
 import { calculateSM2 } from './sm2';
 
 const STORAGE_KEY = 'geomundo_user_progress_v1';
 const THEME_KEY = 'geomundo_theme_mode';
+const EXPERIENCE_MODE_KEY = 'geomundo_experience_mode_v1';
+const ONBOARDING_KEY = 'geomundo_onboarding_completed_v1';
+
+export function loadSavedExperienceMode(): AppExperienceMode {
+  try {
+    const saved = localStorage.getItem(EXPERIENCE_MODE_KEY);
+    if (saved === 'advanced' || saved === 'simple') return saved;
+    // Default must be 'simple' per user specification
+    return 'simple';
+  } catch {
+    return 'simple';
+  }
+}
+
+export function saveExperienceMode(mode: AppExperienceMode): void {
+  try {
+    localStorage.setItem(EXPERIENCE_MODE_KEY, mode);
+  } catch (err) {
+    console.error('Error saving experience mode:', err);
+  }
+}
+
+export function hasCompletedOnboarding(): boolean {
+  try {
+    return localStorage.getItem(ONBOARDING_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function setOnboardingCompleted(completed: boolean): void {
+  try {
+    localStorage.setItem(ONBOARDING_KEY, completed ? 'true' : 'false');
+  } catch (err) {
+    console.error('Error saving onboarding state:', err);
+  }
+}
 
 function getTodayString(): string {
   const now = new Date();
