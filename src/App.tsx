@@ -25,6 +25,7 @@ import { SpacedRepetitionMode } from './components/SpacedRepetitionMode';
 import { ProgressDashboard } from './components/ProgressDashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { RegionSelectorModal, RegionFilterBadge } from './components/RegionSelectorModal';
+import { OfflineBanner } from './components/OfflineBanner';
 
 export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -367,6 +368,8 @@ export default function App() {
         currentFilter={regionFilter}
         onApplyFilter={handleApplyRegionFilter}
       />
+
+      <OfflineBanner />
 
       {/* Minimal Editorial Footer */}
       <footer className="border-t border-stone-200 dark:border-stone-800 py-8 px-6">

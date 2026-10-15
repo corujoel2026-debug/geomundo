@@ -13,7 +13,9 @@ import {
   Sun,
   Moon,
   FileText,
+  Smartphone,
 } from 'lucide-react';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -40,6 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isInstallable, install } = usePWAInstall();
 
   if (!isOpen) return null;
 
@@ -311,6 +314,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </button>
         </div>
+
+        {/* SECTION: INSTALL APP (Visible only when browser allows installation) */}
+        {isInstallable && (
+          <div className="pt-4 border-t border-stone-100 dark:border-stone-800 space-y-3">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block">
+              Aplicación instalable
+            </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs font-semibold text-stone-800 dark:text-stone-200">
+                    Instalar GeoMundo en tu dispositivo
+                  </span>
+                </div>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                  Instala la aplicación para acceder a pantalla completa y usarla sin conexión.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  const success = await install();
+                  if (success) {
+                    setSuccessMessage('¡GeoMundo se ha instalado correctamente!');
+                  }
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white text-xs font-mono uppercase tracking-wider font-semibold shadow-xs transition-colors shrink-0"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Instalar app</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="pt-2 border-t border-stone-100 dark:border-stone-800 flex items-center justify-end">
