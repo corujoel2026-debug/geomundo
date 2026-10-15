@@ -1,0 +1,7 @@
+{
+  "name": "GeoMundo - Memoriza los Países del Mundo",
+  "description": "Aprende y memoriza todos los países, capitales y banderas del mundo organizados por continentes con flashcards interactivas, mapas y quizzes con repetición espaciada.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

@@ -1,0 +1,638 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Country, UserProgress, FlashcardRating, RegionFilter } from '../types';
+import { COUNTRIES } from '../data/countries';
+import { getCountriesForRegionFilter } from '../data/subregions';
+import { recordSM2Result } from '../utils/storage';
+import { getDailyReviewQueue, getRatingIntervalPreviews, getLeitnerDistribution } from '../utils/sm2';
+import { CountryMap } from './CountryMap';
+import { CONTINENTS_META } from '../data/continents';
+import { getFlagUrl } from '../utils/flags';
+import { RegionFilterBadge } from './RegionSelectorModal';
+
+interface DailyReviewModeProps {
+  progress: UserProgress;
+  onUpdateProgress: (updated: UserProgress) => void;
+  onNavigateContinents: () => void;
+  onNavigateQuiz: () => void;
+  regionFilter: RegionFilter;
+  onOpenRegionSelector: () => void;
+}
+
+export const DailyReviewMode: React.FC<DailyReviewModeProps> = ({
+  progress,
+  onUpdateProgress,
+  onNavigateContinents,
+  onNavigateQuiz,
+  regionFilter,
+  onOpenRegionSelector,
+}) => {
+  const { dueCountries, pendingDueCount } = useMemo(
+    () => getDailyReviewQueue(progress, 15),
+    [progress]
+  );
+
+  const [includeAllPending, setIncludeAllPending] = useState(false);
+  const [activeSession, setActiveSession] = useState(false);
+  const [deck, setDeck] = useState<Country[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionRatings, setSessionRatings] = useState<Record<FlashcardRating, number>>({
+    no_lo_sabia: 0,
+    dificil: 0,
+    bien: 0,
+    facil: 0,
+  });
+
+  const pool = useMemo(() => {
+    return getCountriesForRegionFilter(regionFilter, COUNTRIES);
+  }, [regionFilter]);
+
+  const poolIds = useMemo(() => new Set(pool.map(c => c.id)), [pool]);
+
+  const effectiveDueCountries = useMemo(() => {
+    if (includeAllPending) return dueCountries;
+    return dueCountries.filter(c => poolIds.has(c.id));
+  }, [dueCountries, poolIds, includeAllPending]);
+
+  const leitnerDist = useMemo(() => getLeitnerDistribution(progress), [progress]);
+
+  const handleStartSession = (customList?: Country[]) => {
+    const targetList = customList || effectiveDueCountries;
+    setDeck(targetList);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setSessionCompleted(false);
+    setSessionRatings({
+      no_lo_sabia: 0,
+      dificil: 0,
+      bien: 0,
+      facil: 0,
+    });
+    setActiveSession(true);
+  };
+
+  const currentCountry = deck[currentIndex];
+  const meta = currentCountry ? CONTINENTS_META[currentCountry.continent] : null;
+  const currentStats = currentCountry ? progress.studyStats[currentCountry.id] : undefined;
+  const intervalPreviews = getRatingIntervalPreviews(currentStats);
+
+  const handleRating = (rating: FlashcardRating) => {
+    if (!currentCountry) return;
+
+    const updated = recordSM2Result(currentCountry.id, rating, progress);
+    onUpdateProgress(updated);
+
+    setSessionRatings(prev => ({ ...prev, [rating]: prev[rating] + 1 }));
+    setIsFlipped(false);
+
+    if (currentIndex + 1 >= deck.length) {
+      setSessionCompleted(true);
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!activeSession || sessionCompleted || !currentCountry) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsFlipped(prev => !prev);
+      } else if (e.key === '1') {
+        e.preventDefault();
+        handleRating('no_lo_sabia');
+      } else if (e.key === '2') {
+        e.preventDefault();
+        handleRating('dificil');
+      } else if (e.key === '3') {
+        e.preventDefault();
+        handleRating('bien');
+      } else if (e.key === '4') {
+        e.preventDefault();
+        handleRating('facil');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeSession, sessionCompleted, currentCountry, isFlipped, currentIndex, deck.length]);
+
+  return (
+    <div className="max-w-2xl mx-auto px-6 py-12 sm:py-16">
+      {/* Persistent Region Filter Badge */}
+      <RegionFilterBadge
+        filter={regionFilter}
+        onOpenSelector={onOpenRegionSelector}
+        className="mb-6"
+      />
+
+      {/* Header */}
+      <div className="mb-10 pb-4 border-b border-stone-200 dark:border-stone-800">
+        <div className="flex items-baseline justify-between">
+          <div>
+            <h2 className="text-2xl font-serif font-normal text-stone-900 dark:text-stone-100">
+              Repaso del día
+            </h2>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+              Sesión diaria de repetición espaciada calculada por el algoritmo SM-2
+            </p>
+          </div>
+          <span className="text-xs font-mono text-stone-400">
+            {effectiveDueCountries.length} de {pendingDueCount} pendientes
+          </span>
+        </div>
+      </div>
+
+      {!activeSession ? (
+        <div className="space-y-12">
+          {/* Key metrics grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pb-8 border-b border-stone-100 dark:border-stone-800">
+            <div>
+              <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block mb-2">
+                Programados para hoy
+              </span>
+              <span className="text-3xl font-light font-mono text-stone-900 dark:text-stone-100">
+                {effectiveDueCountries.length}
+              </span>
+              <p className="text-xs text-stone-500 mt-1">
+                {includeAllPending ? 'Todos los pendientes mundiales' : 'En la región seleccionada'}
+              </p>
+            </div>
+
+            <div>
+              <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block mb-2">
+                Racha actual
+              </span>
+              <span className="text-3xl font-light font-mono text-stone-900 dark:text-stone-100">
+                {progress.currentStreak} {progress.currentStreak === 1 ? 'día' : 'días'}
+              </span>
+              <p className="text-xs text-stone-500 mt-1">
+                Constancia registrada
+              </p>
+            </div>
+
+            <div className="flex flex-col justify-between">
+              <div>
+                <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block mb-2">
+                  Repasadas hoy
+                </span>
+                <span className="text-3xl font-light font-mono text-stone-900 dark:text-stone-100">
+                  {progress.cardsStudiedToday || 0}
+                </span>
+              </div>
+              <button
+                type="button"
+                disabled={effectiveDueCountries.length === 0}
+                onClick={() => handleStartSession(effectiveDueCountries)}
+                className={`mt-4 py-2.5 px-6 text-xs uppercase tracking-widest font-medium transition-colors ${
+                  effectiveDueCountries.length === 0
+                    ? 'bg-stone-300 dark:bg-stone-800 text-stone-500 cursor-not-allowed'
+                    : 'bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-white dark:text-stone-900'
+                }`}
+              >
+                {effectiveDueCountries.length === 0 ? 'Sin pendientes' : 'Comenzar repaso'}
+              </button>
+            </div>
+          </div>
+
+          {/* Option: Include all pending worldwide */}
+          <div className="p-4 bg-stone-50 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <label className="flex items-start sm:items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={includeAllPending}
+                onChange={(e) => setIncludeAllPending(e.target.checked)}
+                className="w-4 h-4 mt-0.5 sm:mt-0 rounded text-stone-900 dark:text-stone-100 border-stone-300 dark:border-stone-700 cursor-pointer focus:ring-0"
+              />
+              <div>
+                <span className="font-semibold text-stone-900 dark:text-stone-100 block">
+                  Incluir todos los pendientes
+                </span>
+                <span className="text-stone-500 dark:text-stone-400 text-[11px] block">
+                  Revisa todos los repasos atrasados del mundo ({dueCountries.length} en total) sin limitarte a la región activa.
+                </span>
+              </div>
+            </label>
+
+            <span className="font-mono text-stone-600 dark:text-stone-300 shrink-0 self-end sm:self-center">
+              {effectiveDueCountries.length} / {dueCountries.length}
+            </span>
+          </div>
+
+          {/* Leitner Box System Overview */}
+          <div className="space-y-4">
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                Distribución en Cajas de Leitner
+              </h3>
+              <span className="text-xs font-mono text-stone-400">
+                Intervalos crecientes
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+                <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                  Caja 1 · Diario
+                </span>
+                <span className="text-2xl font-light font-mono text-stone-900 dark:text-stone-100">
+                  {leitnerDist.box1}
+                </span>
+                <span className="text-[10px] text-stone-400 block mt-1">1 día</span>
+              </div>
+
+              <div className="p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+                <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                  Caja 2 · Corto
+                </span>
+                <span className="text-2xl font-light font-mono text-stone-900 dark:text-stone-100">
+                  {leitnerDist.box2}
+                </span>
+                <span className="text-[10px] text-stone-400 block mt-1">2–3 días</span>
+              </div>
+
+              <div className="p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+                <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                  Caja 3 · Medio
+                </span>
+                <span className="text-2xl font-light font-mono text-stone-900 dark:text-stone-100">
+                  {leitnerDist.box3}
+                </span>
+                <span className="text-[10px] text-stone-400 block mt-1">~1 semana</span>
+              </div>
+
+              <div className="p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+                <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                  Caja 4 · Largo
+                </span>
+                <span className="text-2xl font-light font-mono text-stone-900 dark:text-stone-100">
+                  {leitnerDist.box4}
+                </span>
+                <span className="text-[10px] text-stone-400 block mt-1">~3 semanas</span>
+              </div>
+
+              <div className="p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 col-span-2 sm:col-span-1">
+                <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                  Caja 5 · Dominado
+                </span>
+                <span className="text-2xl font-light font-mono text-stone-900 dark:text-stone-100">
+                  {leitnerDist.box5}
+                </span>
+                <span className="text-[10px] text-stone-400 block mt-1">&gt; 1 mes</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Today's Queue Preview */}
+          <div>
+            <div className="flex items-baseline justify-between mb-4">
+              <h3 className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                Países seleccionados para hoy
+              </h3>
+              <span className="text-xs font-mono text-stone-400">
+                {effectiveDueCountries.length} {effectiveDueCountries.length === 1 ? 'Estado' : 'Estados'}
+              </span>
+            </div>
+
+            {effectiveDueCountries.length === 0 ? (
+              <div className="p-8 border border-dashed border-stone-200 dark:border-stone-800 text-center space-y-3 bg-stone-50/50 dark:bg-stone-900/30">
+                <p className="text-sm text-stone-600 dark:text-stone-400 font-serif">
+                  No hay países pendientes de repasar hoy en la región seleccionada.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  {dueCountries.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setIncludeAllPending(true)}
+                      className="px-4 py-2 text-xs font-mono uppercase tracking-wider bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-medium"
+                    >
+                      Incluir los {dueCountries.length} pendientes globales
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={onOpenRegionSelector}
+                    className="px-4 py-2 text-xs font-mono uppercase tracking-wider border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:border-stone-900 dark:hover:border-stone-100"
+                  >
+                    Cambiar región
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-stone-100 dark:divide-stone-800 border-y border-stone-200 dark:border-stone-800">
+                {effectiveDueCountries.map((c) => {
+                  const stat = progress.studyStats[c.id];
+                  const inReview = progress.reviewIds.includes(c.id);
+
+                  return (
+                    <div
+                      key={c.id}
+                      className="flex items-center justify-between py-3 px-2 hover:bg-stone-50/60 dark:hover:bg-stone-900/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 h-5 border border-stone-200 dark:border-stone-700 bg-stone-100 shrink-0 overflow-hidden">
+                          <img
+                            src={getFlagUrl(c, 160)}
+                            alt=""
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-sm text-stone-900 dark:text-stone-100">
+                            {c.name}
+                          </span>
+                          <span className="text-xs text-stone-400 ml-2">
+                            ({c.capital})
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-xs font-mono text-stone-400">
+                        {inReview ? (
+                          <span className="text-stone-700 dark:text-stone-300">En revisión</span>
+                        ) : stat?.leitnerBox ? (
+                          <span>Caja {stat.leitnerBox} · {stat.interval ? `${stat.interval}d` : 'Nuevo'}</span>
+                        ) : (
+                          <span>Nuevo</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : sessionCompleted ? (
+        /* Completed Screen */
+        <div className="border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900/50 p-10 sm:p-14 text-center">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-stone-400 block mb-2">
+            Objetivo diario completado
+          </span>
+          <h3 className="text-2xl font-serif font-normal text-stone-900 dark:text-stone-100 mb-2">
+            Has repasado {deck.length} países hoy
+          </h3>
+          <p className="text-xs text-stone-500 dark:text-stone-400 max-w-sm mx-auto mb-8">
+            Los intervalos han sido ajustados según el algoritmo SM-2. Tus próximas revisiones están programadas.
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-md mx-auto font-mono text-center mb-10 pb-8 border-b border-stone-100 dark:border-stone-800">
+            <div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800">
+              <span className="text-2xl font-light text-stone-900 dark:text-stone-100 block">
+                {sessionRatings.facil}
+              </span>
+              <span className="text-[10px] uppercase text-stone-400">Fácil</span>
+            </div>
+            <div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800">
+              <span className="text-2xl font-light text-stone-900 dark:text-stone-100 block">
+                {sessionRatings.bien}
+              </span>
+              <span className="text-[10px] uppercase text-stone-400">Bien</span>
+            </div>
+            <div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800">
+              <span className="text-2xl font-light text-stone-900 dark:text-stone-100 block">
+                {sessionRatings.dificil}
+              </span>
+              <span className="text-[10px] uppercase text-stone-400">Difícil</span>
+            </div>
+            <div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800">
+              <span className="text-2xl font-light text-stone-500 block">
+                {sessionRatings.no_lo_sabia}
+              </span>
+              <span className="text-[10px] uppercase text-stone-400">No lo sabía</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={onOpenRegionSelector}
+              className="w-full sm:w-auto px-6 py-2.5 text-xs uppercase tracking-widest font-medium border border-stone-300 dark:border-stone-700 hover:border-stone-900 dark:hover:border-stone-100 text-stone-700 dark:text-stone-300 transition-colors"
+            >
+              Cambiar región
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSession(false)}
+              className="w-full sm:w-auto px-6 py-2.5 text-xs uppercase tracking-widest font-medium border border-stone-300 dark:border-stone-700 hover:border-stone-900 dark:hover:border-stone-100 text-stone-900 dark:text-stone-100 transition-colors"
+            >
+              Volver al resumen
+            </button>
+            <button
+              type="button"
+              onClick={onNavigateQuiz}
+              className="w-full sm:w-auto px-6 py-2.5 text-xs uppercase tracking-widest font-medium bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-white dark:text-stone-900 transition-colors"
+            >
+              Pasar al cuestionario
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Active Study Session */
+        <div>
+          {/* Progress bar and card counter */}
+          <div className="flex items-center justify-between text-xs font-mono text-stone-400 mb-4">
+            <div className="flex items-center gap-3">
+              <span>
+                Tarjeta {currentIndex + 1} de {deck.length}
+              </span>
+              {currentStats?.leitnerBox && (
+                <>
+                  <span>·</span>
+                  <span className="text-stone-500">
+                    Caja {currentStats.leitnerBox}
+                  </span>
+                </>
+              )}
+            </div>
+            <span className="hidden sm:inline">
+              [Espacio] voltear · [1..4] clasificar
+            </span>
+          </div>
+
+          {/* Flashcard container */}
+          <div
+            className="perspective-1000 w-full min-h-[380px] cursor-pointer mb-6"
+            onClick={() => setIsFlipped(prev => !prev)}
+          >
+            <div
+              className={`relative w-full h-full transform-style-3d transition-transform duration-500 ${
+                isFlipped ? 'rotate-y-180' : ''
+              }`}
+            >
+              {/* FRONT: Flag + Name */}
+              <div
+                className={`absolute inset-0 backface-hidden w-full h-full border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-8 sm:p-10 flex flex-col justify-between select-none ${
+                  isFlipped ? 'pointer-events-none' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between text-xs text-stone-400 font-mono">
+                  <span>{currentCountry.continent}</span>
+                  <span>{currentCountry.iso3}</span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center my-auto text-center py-6">
+                  <div className="w-36 h-24 border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 overflow-hidden mb-6">
+                    <img
+                      src={getFlagUrl(currentCountry, 320)}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <h3 className="text-3xl font-serif font-normal text-stone-900 dark:text-stone-100">
+                    {currentCountry.name}
+                  </h3>
+                </div>
+
+                <div className="text-center text-xs text-stone-400 font-mono">
+                  Pulsa o haz clic para comprobar capital y mapa
+                </div>
+              </div>
+
+              {/* BACK: Capital + Map + Fact */}
+              <div
+                className={`absolute inset-0 backface-hidden rotate-y-180 w-full h-full border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-8 sm:p-10 flex flex-col justify-between select-none ${
+                  !isFlipped ? 'pointer-events-none' : ''
+                }`}
+              >
+                <div>
+                  <div className="flex items-baseline justify-between border-b border-stone-100 dark:border-stone-800 pb-3 mb-4">
+                    <div>
+                      <span className="text-[11px] font-mono uppercase text-stone-400 block">
+                        País
+                      </span>
+                      <strong className="text-lg font-serif font-normal text-stone-900 dark:text-stone-100">
+                        {currentCountry.name}
+                      </strong>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[11px] font-mono uppercase text-stone-400 block">
+                        Capital
+                      </span>
+                      <strong className="text-lg font-serif font-normal text-stone-900 dark:text-stone-100">
+                        {currentCountry.capital}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <CountryMap
+                      country={currentCountry}
+                      height={160}
+                      width={500}
+                      mode="continental"
+                      showControls={false}
+                      interactive={false}
+                      accentColor={meta?.theme.accentHex}
+                    />
+                  </div>
+
+                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed font-normal">
+                    {currentCountry.curiosity}
+                  </p>
+                </div>
+
+                <div className="text-center text-xs text-stone-400 pt-2 font-mono">
+                  Elige dificultad para programar el próximo repaso
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 SM-2 / Leitner Buttons: Fácil, Bien, Difícil, No lo sabía */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {/* 1: No lo sabía */}
+              <button
+                type="button"
+                onClick={() => handleRating('no_lo_sabia')}
+                className="group flex flex-col items-center justify-center p-3 border border-stone-200 dark:border-stone-800 hover:border-red-400/80 dark:hover:border-red-400/60 bg-white dark:bg-stone-900 hover:bg-red-50/30 dark:hover:bg-red-950/20 text-stone-800 dark:text-stone-200 transition-all text-center"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs uppercase tracking-wider font-medium text-stone-800 dark:text-stone-200">
+                    No lo sabía
+                  </span>
+                  <span className="font-mono text-[10px] text-stone-400 group-hover:text-red-500">
+                    (1)
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500">
+                  Próx: {intervalPreviews.no_lo_sabia}
+                </span>
+              </button>
+
+              {/* 2: Difícil */}
+              <button
+                type="button"
+                onClick={() => handleRating('dificil')}
+                className="group flex flex-col items-center justify-center p-3 border border-stone-200 dark:border-stone-800 hover:border-amber-400/80 dark:hover:border-amber-400/60 bg-white dark:bg-stone-900 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 text-stone-800 dark:text-stone-200 transition-all text-center"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs uppercase tracking-wider font-medium text-stone-800 dark:text-stone-200">
+                    Difícil
+                  </span>
+                  <span className="font-mono text-[10px] text-stone-400 group-hover:text-amber-500">
+                    (2)
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500">
+                  Próx: {intervalPreviews.dificil}
+                </span>
+              </button>
+
+              {/* 3: Bien */}
+              <button
+                type="button"
+                onClick={() => handleRating('bien')}
+                className="group flex flex-col items-center justify-center p-3 border border-stone-300 dark:border-stone-700 hover:border-stone-600 dark:hover:border-stone-400 bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-900 dark:text-stone-100 transition-all text-center"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs uppercase tracking-wider font-medium text-stone-900 dark:text-stone-100">
+                    Bien
+                  </span>
+                  <span className="font-mono text-[10px] text-stone-500">
+                    (3)
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-stone-500 dark:text-stone-400">
+                  Próx: {intervalPreviews.bien}
+                </span>
+              </button>
+
+              {/* 4: Fácil */}
+              <button
+                type="button"
+                onClick={() => handleRating('facil')}
+                className="group flex flex-col items-center justify-center p-3 border border-stone-900 dark:border-stone-100 hover:bg-stone-800 dark:hover:bg-white bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 transition-all text-center"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs uppercase tracking-wider font-medium text-white dark:text-stone-900">
+                    Fácil
+                  </span>
+                  <span className="font-mono text-[10px] text-stone-300 dark:text-stone-600">
+                    (4)
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-stone-300 dark:text-stone-600">
+                  Próx: {intervalPreviews.facil}
+                </span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] font-mono text-stone-400 pt-2 px-1">
+              <span>SM-2 Interval Scheduling</span>
+              <span>Espacio = Voltear</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
