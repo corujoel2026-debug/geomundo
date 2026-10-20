@@ -32,6 +32,7 @@ import { ProgressDashboard } from './components/ProgressDashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { RegionSelectorModal, RegionFilterBadge } from './components/RegionSelectorModal';
 import { OfflineBanner } from './components/OfflineBanner';
+import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
@@ -485,6 +486,7 @@ export default function App() {
       />
 
       <OfflineBanner />
+      <PWAUpdateNotification />
 
       {/* Minimal Editorial Footer */}
       <footer className="border-t border-stone-200 dark:border-stone-800 py-8 px-6">
