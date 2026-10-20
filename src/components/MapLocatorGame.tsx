@@ -674,12 +674,6 @@ export const MapLocatorGame: React.FC<MapLocatorGameProps> = ({
             className={`relative w-full h-[480px] sm:h-[540px] border border-stone-200 dark:border-stone-800 bg-stone-100/70 dark:bg-stone-950 overflow-hidden select-none ${
               isDragging ? 'cursor-grabbing' : 'cursor-default'
             }`}
-            style={
-              {
-                '--map-neutral-bg': 'var(--tw-mode-bg, #ebe8e5)',
-                '--map-neutral-stroke': 'var(--tw-mode-border, #d2ceca)',
-              } as React.CSSProperties
-            }
           >
             {/* View Controls Toolbar */}
             <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-white/95 dark:bg-stone-900/95 border border-stone-200 dark:border-stone-800 p-1 text-xs shadow-sm font-mono">

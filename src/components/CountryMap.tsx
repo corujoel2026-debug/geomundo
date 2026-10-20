@@ -166,12 +166,6 @@ export const CountryMap: React.FC<CountryMapProps> = ({
   return (
     <div
       className={`relative w-full overflow-hidden border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 select-none ${className}`}
-      style={
-        {
-          '--map-country-bg': 'var(--tw-mode-bg, #e7e5e4)',
-          '--map-border': 'var(--tw-mode-border, #d6d3d1)',
-        } as React.CSSProperties
-      }
     >
       {/* Zoom and Navigation Controls: "Acercar al territorio" & "Ver en el mundo" */}
       {showControls && (

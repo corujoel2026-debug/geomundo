@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -11,6 +13,24 @@
     font-family: 'Fraunces', Georgia, serif;
     letter-spacing: -0.02em;
   }
+}
+
+:root {
+  --map-country-bg: #e7e5e4;
+  --map-border: #d6d3d1;
+  --map-neutral-bg: #ebe8e5;
+  --map-neutral-stroke: #cfcbc6;
+  --map-dim-bg: #f5f4f2;
+  --map-dim-stroke: #e5e3df;
+}
+
+.dark {
+  --map-country-bg: #292524;
+  --map-border: #44403c;
+  --map-neutral-bg: #292524;
+  --map-neutral-stroke: #44403c;
+  --map-dim-bg: #1c1917;
+  --map-dim-stroke: #292524;
 }
 
 /* Custom 3D Card Flip styles */
@@ -56,4 +76,3 @@
   transform-origin: center;
   animation: map-radar-spin 12s linear infinite;
 }
-

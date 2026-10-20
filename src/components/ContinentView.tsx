@@ -213,7 +213,7 @@ export const ContinentView: React.FC<ContinentViewProps> = ({
                 className={`transition-colors ${
                   filterState === 'all'
                     ? 'font-medium text-stone-900 dark:text-stone-100 underline underline-offset-4'
-                    : 'text-stone-400 hover:text-stone-700'
+                    : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
                 }`}
               >
                 Todos ({countries.length})
@@ -225,7 +225,7 @@ export const ContinentView: React.FC<ContinentViewProps> = ({
                 className={`transition-colors ${
                   filterState === 'mastered'
                     ? 'font-medium text-stone-900 dark:text-stone-100 underline underline-offset-4'
-                    : 'text-stone-400 hover:text-stone-700'
+                    : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
                 }`}
               >
                 Dominados ({countries.filter(c => progress.masteredIds.includes(c.id)).length})
@@ -237,7 +237,7 @@ export const ContinentView: React.FC<ContinentViewProps> = ({
                 className={`transition-colors ${
                   filterState === 'review'
                     ? 'font-medium text-stone-900 dark:text-stone-100 underline underline-offset-4'
-                    : 'text-stone-400 hover:text-stone-700'
+                    : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
                 }`}
               >
                 Repaso ({countries.filter(c => progress.reviewIds.includes(c.id)).length})
@@ -249,7 +249,7 @@ export const ContinentView: React.FC<ContinentViewProps> = ({
                 className={`transition-colors ${
                   filterState === 'unstudied'
                     ? 'font-medium text-stone-900 dark:text-stone-100 underline underline-offset-4'
-                    : 'text-stone-400 hover:text-stone-700'
+                    : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
                 }`}
               >
                 Por estudiar

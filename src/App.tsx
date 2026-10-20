@@ -9,6 +9,7 @@ import {
   toggleReviewStatus,
   loadSavedTheme,
   saveTheme,
+  applyTheme,
   loadSavedExperienceMode,
   saveExperienceMode,
   hasCompletedOnboarding,
@@ -35,7 +36,11 @@ import { OnboardingModal } from './components/OnboardingModal';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
 export default function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const initial = loadSavedTheme();
+    applyTheme(initial);
+    return initial;
+  });
   const [activeTab, setActiveTab] = useState<ActiveTab>('continents');
   const [selectedContinent, setSelectedContinent] = useState<Continent | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
@@ -50,11 +55,7 @@ export default function App() {
   useEffect(() => {
     const saved = loadSavedTheme();
     setTheme(saved);
-    if (saved === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    applyTheme(saved);
   }, []);
 
   const handleToggleTheme = () => {

@@ -346,17 +346,27 @@ export function loadSavedTheme(): 'light' | 'dark' {
   }
 }
 
-export function saveTheme(theme: 'light' | 'dark'): void {
-  try {
-    localStorage.setItem(THEME_KEY, theme);
+export function applyTheme(theme: 'light' | 'dark'): void {
+  if (typeof document !== 'undefined') {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0c0a09' : '#ffffff');
+    }
+  }
+}
+
+export function saveTheme(theme: 'light' | 'dark'): void {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
   } catch (err) {
     console.error('Error saving theme:', err);
   }
+  applyTheme(theme);
 }
 
 export function resetAllProgress(): UserProgress {
