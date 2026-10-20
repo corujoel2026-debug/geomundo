@@ -7,6 +7,7 @@ import { getRatingIntervalPreviews } from '../utils/sm2';
 import { CountryMap } from './CountryMap';
 import { getFlagUrl } from '../utils/flags';
 import { FlagImage } from './FlagImage';
+import { EspacioPublicitario } from './EspacioPublicitario';
 
 import { RegionFilter, AppExperienceMode } from '../types';
 import { getCountriesForRegionFilter } from '../data/subregions';
@@ -200,6 +201,8 @@ export const FlashcardMode: React.FC<FlashcardModeProps> = ({
               Iniciar nueva sesión
             </button>
           </div>
+
+          <EspacioPublicitario position="resumen-sesion" id="ad-resumen-flashcards" />
         </div>
       ) : (
         <div>

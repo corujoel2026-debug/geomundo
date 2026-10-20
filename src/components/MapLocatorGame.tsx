@@ -9,6 +9,7 @@ import { getCountriesForRegionFilter, SUBREGION_MAP_VIEWS } from '../data/subreg
 import { recordCountryResult } from '../utils/storage';
 import { getFlagUrl } from '../utils/flags';
 import { RegionFilterBadge } from './RegionSelectorModal';
+import { EspacioPublicitario } from './EspacioPublicitario';
 import { RefreshCw, ZoomIn, ZoomOut, Eye, ArrowRight, Check, X, Target, Globe } from 'lucide-react';
 
 interface MapLocatorGameProps {
@@ -571,6 +572,8 @@ export const MapLocatorGame: React.FC<MapLocatorGameProps> = ({
               </button>
             )}
           </div>
+
+          <EspacioPublicitario position="resumen-sesion" id="ad-resumen-map-locator" />
         </div>
       ) : (
         /* Active Game Arena */

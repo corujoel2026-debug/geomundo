@@ -30,11 +30,13 @@ export const Header: React.FC<HeaderProps> = ({
   const navItems: { id: ActiveTab; label: string; badge?: number; icon?: boolean }[] = useMemo(() => {
     if (experienceMode === 'simple') {
       return [
-        { id: 'continents', label: 'Continentes' },
+        { id: 'inicio', label: 'Inicio' },
         { id: 'guided-practice', label: 'Practicar', icon: true },
+        { id: 'continents', label: 'Continentes' },
       ];
     }
     return [
+      { id: 'inicio', label: 'Inicio' },
       { id: 'continents', label: 'Continentes' },
       { id: 'daily-review', label: 'Repaso del día', badge: pendingDueCount > 0 ? pendingDueCount : undefined },
       { id: 'flashcards', label: 'Tarjetas' },
@@ -55,8 +57,8 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-baseline gap-3">
           <button
             type="button"
-            onClick={() => setActiveTab('continents')}
-            className="text-left text-stone-900 dark:text-stone-100 hover:opacity-80 transition-opacity focus:outline-none"
+            onClick={() => setActiveTab('inicio')}
+            className="text-left text-stone-900 dark:text-stone-100 hover:opacity-80 transition-opacity focus:outline-none cursor-pointer"
           >
             <span className="text-xl font-medium tracking-tight font-display">
               GeoMundo

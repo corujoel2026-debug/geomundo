@@ -6,6 +6,7 @@ import { recordCountryResult } from '../utils/storage';
 import { RegionFilterBadge } from './RegionSelectorModal';
 import { CountryMap } from './CountryMap';
 import { getFlagUrl } from '../utils/flags';
+import { EspacioPublicitario } from './EspacioPublicitario';
 import { Timer, Zap, Play, RotateCcw, Award, CheckCircle2, XCircle } from 'lucide-react';
 
 interface TimeTrialModeProps {
@@ -429,6 +430,8 @@ export const TimeTrialMode: React.FC<TimeTrialModeProps> = ({
               <span>Jugar de nuevo</span>
             </button>
           </div>
+
+          <EspacioPublicitario position="resumen-sesion" id="ad-resumen-timetrial" />
         </div>
       )}
     </div>

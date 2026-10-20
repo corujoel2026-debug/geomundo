@@ -34,6 +34,9 @@ import { RegionSelectorModal, RegionFilterBadge } from './components/RegionSelec
 import { OfflineBanner } from './components/OfflineBanner';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { OnboardingModal } from './components/OnboardingModal';
+import { HomeView } from './components/HomeView';
+import { LegalModal, LegalSection } from './components/LegalModal';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
 export default function App() {
@@ -42,7 +45,7 @@ export default function App() {
     applyTheme(initial);
     return initial;
   });
-  const [activeTab, setActiveTab] = useState<ActiveTab>('continents');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('inicio');
   const [selectedContinent, setSelectedContinent] = useState<Continent | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -52,6 +55,7 @@ export default function App() {
   const [studyContinent, setStudyContinent] = useState<Continent | undefined>(undefined);
   const [experienceMode, setExperienceMode] = useState<AppExperienceMode>(loadSavedExperienceMode);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => !hasCompletedOnboarding());
+  const [legalSection, setLegalSection] = useState<LegalSection | null>(null);
 
   useEffect(() => {
     const saved = loadSavedTheme();
@@ -164,6 +168,30 @@ export default function App() {
       />
 
       <main className="flex-1 pb-24">
+        {/* PÁGINA DE INICIO */}
+        {activeTab === 'inicio' && (
+          <HomeView
+            progress={progress}
+            experienceMode={experienceMode}
+            onStartPractice={() => {
+              setStudyContinent(undefined);
+              setActiveTab('guided-practice');
+            }}
+            onExploreContinents={(continent) => {
+              if (continent) {
+                setSelectedContinent(continent);
+              } else {
+                setSelectedContinent(null);
+              }
+              setActiveTab('continents');
+            }}
+            onStartQuiz={handleStartQuiz}
+            onStartFlashcards={handleStartFlashcards}
+            onStartMapGame={handleStartMapGame}
+            onOpenOnboarding={() => setShowOnboarding(true)}
+          />
+        )}
+
         {/* GUIDED PRACTICE TAB (Modo Simple y accesible) */}
         {activeTab === 'guided-practice' && (
           <GuidedPracticeMode
@@ -488,23 +516,66 @@ export default function App() {
       <OfflineBanner />
       <PWAUpdateNotification />
 
-      {/* Minimal Editorial Footer */}
-      <footer className="border-t border-stone-200 dark:border-stone-800 py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-baseline justify-between gap-4 text-xs font-mono text-stone-400">
-          <div className="flex items-center gap-4">
-            <span>GeoMundo · {TOTAL_COUNTRIES_COUNT} países del mundo</span>
+      <LegalModal
+        isOpen={legalSection !== null}
+        initialSection={legalSection || 'privacidad'}
+        onClose={() => setLegalSection(null)}
+      />
+
+      <CookieConsentBanner
+        onOpenPrivacyPolicy={() => setLegalSection('privacidad')}
+      />
+
+      {/* Pie de página discreto */}
+      <footer className="border-t border-stone-200 dark:border-stone-800 py-8 px-6 mt-auto">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-stone-400">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="font-sans font-medium text-stone-700 dark:text-stone-300">GeoMundo</span>
+            <span>·</span>
+            <span>{TOTAL_COUNTRIES_COUNT} países</span>
+            <span>·</span>
+            <button
+              type="button"
+              onClick={() => setActiveTab('inicio')}
+              className="hover:underline hover:text-stone-700 dark:hover:text-stone-200 transition-colors cursor-pointer"
+            >
+              Inicio
+            </button>
             <span>·</span>
             <button
               type="button"
               onClick={() => setShowSettingsModal(true)}
-              className="hover:underline hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+              className="hover:underline hover:text-stone-700 dark:hover:text-stone-200 transition-colors cursor-pointer"
             >
               Ajustes
             </button>
           </div>
 
-          <div>
-            <span>Datos cartográficos Natural Earth / D3.js</span>
+          {/* Enlaces requeridos: Política de privacidad, Términos de uso y Contacto */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button
+              type="button"
+              onClick={() => setLegalSection('privacidad')}
+              className="hover:underline hover:text-stone-700 dark:hover:text-stone-200 transition-colors cursor-pointer"
+            >
+              Política de privacidad
+            </button>
+            <span>·</span>
+            <button
+              type="button"
+              onClick={() => setLegalSection('terminos')}
+              className="hover:underline hover:text-stone-700 dark:hover:text-stone-200 transition-colors cursor-pointer"
+            >
+              Términos de uso
+            </button>
+            <span>·</span>
+            <button
+              type="button"
+              onClick={() => setLegalSection('contacto')}
+              className="hover:underline hover:text-stone-700 dark:hover:text-stone-200 transition-colors cursor-pointer"
+            >
+              Contacto
+            </button>
           </div>
         </div>
       </footer>

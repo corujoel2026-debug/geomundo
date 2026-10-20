@@ -5,6 +5,7 @@ import { recordSM2Result } from '../utils/storage';
 import { getDailyReviewQueue } from '../utils/sm2';
 import { getFlagUrl } from '../utils/flags';
 import { FlagImage } from './FlagImage';
+import { EspacioPublicitario } from './EspacioPublicitario';
 import confetti from 'canvas-confetti';
 import {
   RotateCcw,
@@ -350,6 +351,9 @@ export const GuidedPracticeMode: React.FC<GuidedPracticeModeProps> = ({
             <span>Volver al inicio</span>
           </button>
         </div>
+
+        {/* Espacio publicitario en pantalla de resumen al terminar sesión */}
+        <EspacioPublicitario position="resumen-sesion" id="ad-resumen-practica" />
       </div>
     );
   }

@@ -107,6 +107,7 @@ export interface QuizQuestion {
 export type AppExperienceMode = 'simple' | 'advanced';
 
 export type ActiveTab =
+  | 'inicio'
   | 'continents'
   | 'guided-practice'
   | 'flashcards'

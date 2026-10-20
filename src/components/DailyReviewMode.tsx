@@ -8,6 +8,7 @@ import { CountryMap } from './CountryMap';
 import { CONTINENTS_META } from '../data/continents';
 import { getFlagUrl } from '../utils/flags';
 import { RegionFilterBadge } from './RegionSelectorModal';
+import { EspacioPublicitario } from './EspacioPublicitario';
 
 interface DailyReviewModeProps {
   progress: UserProgress;
@@ -430,6 +431,8 @@ export const DailyReviewMode: React.FC<DailyReviewModeProps> = ({
               Pasar al cuestionario
             </button>
           </div>
+
+          <EspacioPublicitario position="resumen-sesion" id="ad-resumen-daily-review" />
         </div>
       ) : (
         /* Active Study Session */

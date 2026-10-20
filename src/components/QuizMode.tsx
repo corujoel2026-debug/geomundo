@@ -7,6 +7,7 @@ import { checkQuizAnswer, MatchResult } from '../utils/fuzzyMatch';
 import { CountryMap } from './CountryMap';
 import { getFlagUrl } from '../utils/flags';
 import { FlagImage } from './FlagImage';
+import { EspacioPublicitario } from './EspacioPublicitario';
 
 import { RegionFilter } from '../types';
 import { getCountriesForRegionFilter } from '../data/subregions';
@@ -338,6 +339,8 @@ export const QuizMode: React.FC<QuizModeProps> = ({
           >
             Comenzar nuevo cuestionario
           </button>
+
+          <EspacioPublicitario position="resumen-sesion" id="ad-resumen-quiz" />
         </div>
       ) : (
         /* Active Question */
