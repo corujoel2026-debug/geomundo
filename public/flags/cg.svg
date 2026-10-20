@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="100%" height="100%">
+  <!-- Upper hoist green -->
+  <polygon points="0,0 200,0 0,200" fill="#009543"/>
+  <!-- Middle diagonal yellow stripe -->
+  <polygon points="200,0 300,0 100,200 0,200" fill="#fbde4a"/>
+  <!-- Lower fly red -->
+  <polygon points="300,0 300,200 100,200" fill="#dc241f"/>
+</svg>

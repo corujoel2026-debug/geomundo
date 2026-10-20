@@ -6,6 +6,7 @@ import { recordSM2Result } from '../utils/storage';
 import { getRatingIntervalPreviews } from '../utils/sm2';
 import { CountryMap } from './CountryMap';
 import { getFlagUrl } from '../utils/flags';
+import { FlagImage } from './FlagImage';
 
 import { RegionFilter, AppExperienceMode } from '../types';
 import { getCountriesForRegionFilter } from '../data/subregions';
@@ -245,11 +246,10 @@ export const FlashcardMode: React.FC<FlashcardModeProps> = ({
 
                 <div className="flex flex-col items-center justify-center my-auto text-center py-6">
                   {/* Flag */}
-                  <div className="w-36 h-24 border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 overflow-hidden mb-6">
-                    <img
-                      src={getFlagUrl(currentCountry, 320)}
-                      alt=""
-                      referrerPolicy="no-referrer"
+                  <div className="w-36 h-24 border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 overflow-hidden mb-6 flex items-center justify-center">
+                    <FlagImage
+                      country={currentCountry}
+                      width={320}
                       className="w-full h-full object-cover"
                     />
                   </div>

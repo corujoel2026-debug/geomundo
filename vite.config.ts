@@ -48,13 +48,13 @@ export default defineConfig(() => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff,woff2}'],
           runtimeCaching: [
             {
-              // FlagCDN flags: Cache when viewed for the first time
-              urlPattern: /^https:\/\/flagcdn\.com\/.*/i,
+              // FlagCDN and Flagpedia flags: Cache when viewed for the first time
+              urlPattern: /^https:\/\/(flagcdn\.com|flagpedia\.net)\/.*/i,
               handler: 'CacheFirst',
               options: {
-                cacheName: 'flagcdn-flags-cache',
+                cacheName: 'flags-cache',
                 expiration: {
-                  maxEntries: 350,
+                  maxEntries: 450,
                   maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
                 },
                 cacheableResponse: {

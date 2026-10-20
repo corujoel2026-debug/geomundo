@@ -6,6 +6,7 @@ import { recordCountryResult } from '../utils/storage';
 import { checkQuizAnswer, MatchResult } from '../utils/fuzzyMatch';
 import { CountryMap } from './CountryMap';
 import { getFlagUrl } from '../utils/flags';
+import { FlagImage } from './FlagImage';
 
 import { RegionFilter } from '../types';
 import { getCountriesForRegionFilter } from '../data/subregions';
@@ -372,11 +373,10 @@ export const QuizMode: React.FC<QuizModeProps> = ({
           {/* Visual element */}
           <div className="py-2">
             {currentQ.type === 'flag_to_country' && (
-              <div className="w-44 h-28 border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 overflow-hidden mx-auto">
-                <img
-                  src={getFlagUrl(currentQ.country, 320)}
-                  alt=""
-                  referrerPolicy="no-referrer"
+              <div className="w-44 h-28 border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 overflow-hidden mx-auto flex items-center justify-center">
+                <FlagImage
+                  country={currentQ.country}
+                  width={320}
                   className="w-full h-full object-cover"
                 />
               </div>

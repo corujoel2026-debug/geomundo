@@ -4,6 +4,7 @@ import { COUNTRIES } from '../data/countries';
 import { recordSM2Result } from '../utils/storage';
 import { getDailyReviewQueue } from '../utils/sm2';
 import { getFlagUrl } from '../utils/flags';
+import { FlagImage } from './FlagImage';
 import confetti from 'canvas-confetti';
 import {
   RotateCcw,
@@ -295,11 +296,11 @@ export const GuidedPracticeMode: React.FC<GuidedPracticeModeProps> = ({
                 className="flex items-center justify-between p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700/60"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <img
-                    src={getFlagUrl(item.country, 40)}
+                  <FlagImage
+                    country={item.country}
+                    width={80}
                     alt={`Bandera de ${item.country.name}`}
-                    className="w-7 h-5 object-cover rounded shadow-xs shrink-0"
-                    loading="lazy"
+                    className="w-7 h-5 object-cover rounded shadow-xs shrink-0 border border-stone-200/60 dark:border-stone-700/60"
                   />
                   <div className="truncate">
                     <span className="text-sm font-semibold text-stone-900 dark:text-stone-100 block truncate">
@@ -416,8 +417,9 @@ export const GuidedPracticeMode: React.FC<GuidedPracticeModeProps> = ({
           >
             {/* Bandera */}
             <div className="relative">
-              <img
-                src={getFlagUrl(currentCountry, 320)}
+              <FlagImage
+                country={currentCountry}
+                width={320}
                 alt={`Bandera de ${currentCountry.name}`}
                 className="w-44 sm:w-56 h-auto max-h-36 object-contain rounded-lg shadow-md border border-stone-200/60 dark:border-stone-700"
               />
@@ -499,8 +501,9 @@ export const GuidedPracticeMode: React.FC<GuidedPracticeModeProps> = ({
 
           {/* Bandera */}
           <div className="flex justify-center">
-            <img
-              src={getFlagUrl(currentCountry, 250)}
+            <FlagImage
+              country={currentCountry}
+              width={320}
               alt={`Bandera de ${currentCountry.name}`}
               className="w-36 sm:w-44 h-auto max-h-28 object-contain rounded-lg shadow border border-stone-200 dark:border-stone-700"
             />
@@ -521,7 +524,7 @@ export const GuidedPracticeMode: React.FC<GuidedPracticeModeProps> = ({
                     'border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 font-bold';
                 } else if (isSelected && !isCorrect) {
                   buttonStyle =
-                    'border-2 border-red-500 bg-red-50 dark:bg-red-950/50 text-red-900 dark:text-red-200';
+                    'border-2 border-red-500 bg-red-50 dark:bg-red-950/50 text-red-900 dark:text-red-200 font-bold';
                 } else {
                   buttonStyle = 'opacity-40 border-stone-200 dark:border-stone-800';
                 }
@@ -549,21 +552,21 @@ export const GuidedPracticeMode: React.FC<GuidedPracticeModeProps> = ({
             })}
           </div>
 
-          {/* Retroalimentación o botones directos "Lo sé" / "Repasar" */}
-          {isQuizSubmitted ? (
+          {/* Retroalimentación y botón grande "Siguiente" tras elegir */}
+          {isQuizSubmitted && (
             <div className="pt-3 space-y-4 animate-fadeIn">
               <div
                 className={`p-4 rounded-2xl border text-sm sm:text-base flex items-center gap-3 ${
                   selectedQuizAnswer === currentCountry.capital
                     ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200'
-                    : 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200'
+                    : 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-200'
                 }`}
               >
                 {selectedQuizAnswer === currentCountry.capital ? (
                   <>
                     <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <div>
-                      <span className="font-bold block">¡Respuesta correcta!</span>
+                      <span className="font-bold block text-base sm:text-lg">¡Respuesta correcta!</span>
                       <span className="text-xs sm:text-sm opacity-90">
                         La capital de {currentCountry.name} es {currentCountry.capital}.
                       </span>
@@ -571,53 +574,28 @@ export const GuidedPracticeMode: React.FC<GuidedPracticeModeProps> = ({
                   </>
                 ) : (
                   <>
-                    <HelpCircle className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <XCircle className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0" />
                     <div>
-                      <span className="font-bold block">
-                        La capital es {currentCountry.capital}
+                      <span className="font-bold block text-base sm:text-lg">
+                        Incorrecto: la capital es {currentCountry.capital}
                       </span>
                       <span className="text-xs sm:text-sm opacity-90">
-                        No te preocupes, la volveremos a repasar.
+                        Volverá a aparecer para repasar en próximas sesiones.
                       </span>
                     </div>
                   </>
                 )}
               </div>
 
+              {/* Botón grande "Siguiente" */}
               <button
                 type="button"
                 onClick={handleNextFromQuiz}
-                className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-lg shadow-md transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-lg sm:text-xl shadow-md transition-all cursor-pointer active:scale-98"
               >
-                <span>Avanzar a la siguiente tarjeta</span>
-                <ChevronRight className="w-5 h-5" />
+                <span>Siguiente</span>
+                <ChevronRight className="w-6 h-6" />
               </button>
-            </div>
-          ) : (
-            /* Los dos botones también accesibles directamente si el usuario prefiere responder sin tocar las opciones */
-            <div className="pt-2">
-              <div className="text-center text-xs text-stone-400 mb-2 font-mono">
-                O responde directamente:
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => handleAnswer('repasar')}
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 font-medium text-sm transition-all cursor-pointer"
-                >
-                  <RotateCcw className="w-4 h-4 text-amber-600" />
-                  <span>Repasar</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleAnswer('lo_se')}
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-sm transition-all cursor-pointer"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>Lo sé</span>
-                </button>
-              </div>
             </div>
           )}
         </div>
